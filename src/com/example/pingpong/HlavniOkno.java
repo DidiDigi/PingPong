@@ -3,17 +3,28 @@ package com.example.pingpong;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import javax.swing.event.*;
 
 public class HlavniOkno extends JFrame {
 
     // JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
     // Generated using JFormDesigner non-commercial license
     JLabel labMicek;
+    JToolBar toolBar;
+    JButton btnStart;
+    JSlider sliderSpeed;
+    JButton btnStop;
     // JFormDesigner - End of variables declaration  //GEN-END:variables
     JPanel contentPane;
-    int deltaX = 5;
-    int deltaY = 5;
+    int deltaX = SPEED_INIT;
+    int deltaY = SPEED_INIT;
     Timer casovac;
+    Boolean pauza = false;
+    static final int SPEED_MIN = 1;
+    static final int SPEED_MAX = 31;
+    static final int SPEED_INIT = 16;    //deltaX = deltaY
+    JSlider speedValue;
+
 
     public HlavniOkno() {
         initComponents();
@@ -26,7 +37,6 @@ public class HlavniOkno extends JFrame {
         Dimension velikostOkna = contentPane.getSize();
         double oknoX = velikostOkna.getWidth();
         double oknoY = velikostOkna.getHeight();
-        System.out.println("sirka " + oknoX);
 
         x = x + deltaX;
         y = y + deltaY;
@@ -41,11 +51,11 @@ public class HlavniOkno extends JFrame {
             deltaY = -deltaY;
         }
 
-        if (x > oknoX) {
+        if ((x + 2*labMicek.getWidth()) >= oknoX) {
             deltaX = -deltaX;
         }
 
-        if (y > oknoY) {
+        if ((y + 2*labMicek.getHeight()) >= oknoY) {
             deltaY = -deltaY;
         }
 
@@ -57,16 +67,51 @@ public class HlavniOkno extends JFrame {
     private void priOtevreniOkna(WindowEvent e) {
         casovac = new Timer(500, it -> priStiskuBtnPohybMicku(it)); // it používáme, protože "e" už v metodě máme
         casovac.start();
+        speedValue = new JSlider(JSlider.HORIZONTAL, SPEED_MIN, SPEED_MAX, SPEED_INIT);
+        speedValue.addChangeListener(this::sliderSpeedStateChanged);
+
     }
 
     private void priZavreniOkna(WindowEvent e) {
         casovac.stop();
     }
 
+    private void priStiskuBtnStart(ActionEvent e) {
+        casovac.start();
+    }
+
+    private void priStiskuBtnStop(ActionEvent e) {
+        casovac.stop();
+    }
+
+    private void sliderSpeedStateChanged(ChangeEvent e) {
+        JSlider source = (JSlider)e.getSource();
+
+        //Turn on labels at major tick marks.
+        speedValue.setMajorTickSpacing(10);
+        speedValue.setMinorTickSpacing(1);
+        speedValue.setPaintTicks(true);
+        speedValue.setPaintLabels(true);
+        if (!source.getValueIsAdjusting()) {
+            int speed = (int)source.getValue();
+
+            if (deltaX < 0) { deltaX = -speed; }
+               else { deltaX = speed; }
+
+            if (deltaY < 0) { deltaY = -speed; }
+               else { deltaY = speed; }
+        }
+    }
+
+
     private void initComponents() {
         // JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents
         // Generated using JFormDesigner non-commercial license
         labMicek = new JLabel();
+        toolBar = new JToolBar();
+        btnStart = new JButton();
+        sliderSpeed = new JSlider();
+        btnStop = new JButton();
 
         //======== this ========
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -90,6 +135,26 @@ public class HlavniOkno extends JFrame {
         labMicek.setIcon(new ImageIcon(getClass().getResource("/com/example/pingpong/micek.png")));
         contentPane.add(labMicek);
         labMicek.setBounds(new Rectangle(new Point(235, 140), labMicek.getPreferredSize()));
+
+        //======== toolBar ========
+        {
+
+            //---- btnStart ----
+            btnStart.setText("Start");
+            btnStart.addActionListener(e -> priStiskuBtnStart(e));
+            toolBar.add(btnStart);
+
+            //---- sliderSpeed ----
+            sliderSpeed.addChangeListener(e -> sliderSpeedStateChanged(e));
+            toolBar.add(sliderSpeed);
+
+            //---- btnStop ----
+            btnStop.setText("Stop");
+            btnStop.addActionListener(e -> priStiskuBtnStop(e));
+            toolBar.add(btnStop);
+        }
+        contentPane.add(toolBar);
+        toolBar.setBounds(0, 0, 385, toolBar.getPreferredSize().height);
 
         { // compute preferred size
             Dimension preferredSize = new Dimension();
